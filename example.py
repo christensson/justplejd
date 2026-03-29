@@ -1,5 +1,5 @@
 import asyncio
-from just_plejd import Plejd, commands
+from justplejd import Plejd, commands
 import os
 
 async def main():

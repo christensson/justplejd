@@ -5,8 +5,8 @@ Control your Plejd devices from Python! This package lets you connect to your Pl
 ## ⚡️ Installation
 
 ```
-git clone https://github.com/peterssonjesper/just_plejd.git
-cd just_plejd
+git clone https://github.com/peterssonjesper/justplejd.git
+cd justplejd
 pip install .
 ```
 
@@ -16,7 +16,7 @@ Below is an example of how to use it:
 
 ```python
 import asyncio
-from just_plejd import Plejd, commands
+from justplejd import Plejd, commands
 
 async def main():
     plejd = Plejd(email='your@email.com', password='your-password')

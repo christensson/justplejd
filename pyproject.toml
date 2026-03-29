@@ -1,5 +1,5 @@
 [project]
-name = "just_plejd"
+name = "justplejd"
 version = "0.0.1"
 description = "Control Plejd devices using Python"
 authors = [{ name = "Jesper Petersson", email = "jesper@jpetersson.se" }]
