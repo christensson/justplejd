@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 from bleak import BleakScanner, BleakClient
 from bleak.backends.device import BLEDevice
 
@@ -9,6 +9,7 @@ from . import http_api
 from .packet_parser import parse_incoming_packet
 from .proto import create_auth_response, encode_payloads, encrypt_decrypt, extract_mac_address
 
+LIGHT_LEVEL_UUID = "31ba0003-6085-4726-be45-040c957391b5"
 DATA_SENDING_UUID = "31ba0004-6085-4726-be45-040c957391b5"
 DATA_RETRIEVAL_UUID = "31ba0005-6085-4726-be45-040c957391b5"
 AUTH_UUID = "31ba0009-6085-4726-be45-040c957391b5"
@@ -21,7 +22,9 @@ class PlejdDevice():
         self.rssi = rssi
 
 class Plejd():
-    def __init__(self, email: str, password: str, site_id = '', crypto_key  = ''):
+    def __init__(self, email: str, password: str, site_id = '', crypto_key  = '', site: Optional[http_api.Site] = None):
+        if site:
+            crypto_key = site.crypto_key
         if not crypto_key and not (email or password):
             print("You need to provide the email and password to your Plejd account. The information will only be used to retrieve a secret key from the official Plejd API which is needed to communicate with your Plejd devices. You do that by running Plejd(email='foo@bar.com', password='s3cret')")
 
@@ -33,7 +36,7 @@ class Plejd():
         self._on_change_callbacks = []
         self._is_connected = False
         self._client = None
-        self._site = None
+        self._site = site
 
     async def connect(self, timeout = 3.0):
         error = await self._establish_site_connection()
@@ -80,6 +83,36 @@ class Plejd():
                 
                 asyncio.get_event_loop().call_later(self.connection_timeout, lambda: asyncio.create_task(reconnect_and_retry()))
     
+    async def get_states(self, timeout: float = 2.0):
+        """Ask the mesh to report the state of all outputs.
+
+        Returns a dict mapping device address -> {"state": bool, "dim": int (0-255)}.
+        Outputs that don't answer within `timeout` seconds are missing from the result.
+        """
+        states = {}
+
+        def handle(_char, data: bytearray):
+            # The reply is a sequence of 10 byte records:
+            # AA SS ?? ?? ?? DDDD ... (address, on/off, dim level little endian)
+            for i in range(0, len(data) - 9, 10):
+                record = data[i:i + 10]
+                states[record[0]] = {
+                    "state": bool(record[1]),
+                    "dim": int.from_bytes(record[5:7], "little") >> 8,
+                }
+
+        await self._client.start_notify(LIGHT_LEVEL_UUID, handle)
+        try:
+            await self._client.write_gatt_char(LIGHT_LEVEL_UUID, b"\x01", response=True)
+            await asyncio.sleep(timeout)
+        finally:
+            try:
+                await self._client.stop_notify(LIGHT_LEVEL_UUID)
+            except Exception:
+                pass
+
+        return states
+
     def on_change(self, callback: Callable[[Any], None]) -> Callable[[], None]:
         self._on_change_callbacks.append(callback)
 
