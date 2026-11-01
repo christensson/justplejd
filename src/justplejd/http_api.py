@@ -49,7 +49,7 @@ class Device:
     traits: PlejdTraits
 
     def __init__(self, json, address: str):
-        self.title = json['title']
+        self.title = json.get('title', "Unknown")
         self.id = json['deviceId']
         self.room_id = json['roomId']
         self.traits = PlejdTraits(json['traits'])
