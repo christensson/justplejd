@@ -49,6 +49,30 @@ asyncio.run(main())
 EMAIL="your@email.com" PASSWORD="your-plejd-password" python example.py
 ```
 
+### Command line usage
+
+There is also a small command line tool, `justplejd` (installed with the package, or run with `poetry run justplejd` from a checkout). First dump your site's devices to a file (this is the only step that needs your Plejd credentials; add `SITE_ID=...` if you have several sites):
+
+```bash
+EMAIL="your@email.com" PASSWORD="your-plejd-password" justplejd --dump-devices devices.json
+```
+
+List the devices and their current state:
+
+```bash
+justplejd --devices devices.json
+```
+
+Control a device by name. `STATE` is `on`, `off` or a dim level from `0` to `100`:
+
+```bash
+justplejd --devices devices.json "Ceiling" on
+justplejd --devices devices.json "Ceiling" 40
+justplejd --devices devices.json "Ceiling" off
+```
+
+The devices file contains your site's crypto key, so keep it private.
+
 ## 🙏 Credits & Inspiration
 
 Big shoutout to [PyPlejd](https://github.com/thomasloven/pyplejd) - a lot of this project is inspired (okay, also borrowed) from their excellent work.

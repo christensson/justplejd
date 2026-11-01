@@ -12,6 +12,9 @@ dependencies = [
     "cryptography",
 ]
 
+[project.scripts]
+justplejd = "justplejd.cli:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
